@@ -27,11 +27,76 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
             row_buttons.append(InlineKeyboardButton(f"{row}-{col}", callback_data=f"zone_{row}_{col}"))
         keyboard.append(row_buttons)
     
+    # Add a global summary button
+    keyboard.append([InlineKeyboardButton("📊 View Fleet Summary", callback_data="fleet_summary")])
+    
     reply_markup = InlineKeyboardMarkup(keyboard)
     await update.message.reply_text(
-        '🌾 Welcome to Krishikaran Bot!\n\nSelect a zone from the 5x5 grid to view its latest health status:', 
+        '🌾 Welcome to Krishikaran Bot!\n\nSelect a zone from the 5x5 grid or click "View Fleet Summary" to see the overall farm status:', 
         reply_markup=reply_markup
     )
+
+async def get_summary_text():
+    """Generate a fleet-wide summary text."""
+    history = load_history()
+    if not history:
+        return "No analysis history found. Please analyze zones via the web dashboard first."
+
+    # Group by zone to get the LATEST status for each
+    latest_zone_status = {}
+    # Since history is newest first, the first one we see is the latest
+    for item in history:
+        row = item.get("row")
+        col = item.get("col")
+        key = f"{row}-{col}"
+        if key not in latest_zone_status:
+            latest_zone_status[key] = item
+
+    total_analyzed = len(latest_zone_status)
+    good_count = 0
+    avg_count = 0
+    bad_count = 0
+    critical_zones = []
+    attention_zones = []
+
+    for item in latest_zone_status.values():
+        health = str(item.get("health", "")).lower()
+        if health == 'good':
+            good_count += 1
+        elif health == 'avg':
+            avg_count += 1
+            attention_zones.append(item)
+        elif health == 'bad':
+            bad_count += 1
+            critical_zones.append(item)
+
+    msg = "📊 *Krishikaran Fleet Summary*\n\n"
+    msg += f"🚜 *Total Zones Analyzed:* {total_analyzed}\n"
+    msg += f"✅ *Healthy:* {good_count}\n"
+    msg += f"⚠️ *At Risk:* {avg_count}\n"
+    msg += f"🚨 *Critical:* {bad_count}\n\n"
+
+    if critical_zones:
+        msg += "🔴 *CRITICAL ACTION REQUIRED:*\n"
+        for z in critical_zones:
+            msg += f"• *Zone ({z.get('row')},{z.get('col')})*: Score {z.get('score')}/10\n"
+        msg += "\n"
+
+    if attention_zones:
+        msg += "🟡 *Performance Warnings:*\n"
+        for z in attention_zones:
+            msg += f"• *Zone ({z.get('row')},{z.get('col')})*: Score {z.get('score')}/10\n"
+        msg += "\n"
+
+    if not critical_zones and not attention_zones:
+        msg += "✅ All analyzed zones are performing optimally.\n"
+
+    return msg
+
+async def summary_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """Handle the /summary command."""
+    msg = await get_summary_text()
+    await update.message.reply_text(msg, parse_mode='Markdown')
 
 async def button(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Parses the CallbackQuery and updates the message text."""
@@ -96,6 +161,12 @@ async def button(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         
         await query.edit_message_text(text=msg, parse_mode='Markdown', reply_markup=reply_markup)
 
+    elif data == "fleet_summary":
+        msg = await get_summary_text()
+        keyboard = [[InlineKeyboardButton("🔙 Back to Grid", callback_data="back_to_grid")]]
+        reply_markup = InlineKeyboardMarkup(keyboard)
+        await query.edit_message_text(text=msg, parse_mode='Markdown', reply_markup=reply_markup)
+
     elif data == "back_to_grid":
         # Re-render the grid
         keyboard = []
@@ -104,9 +175,13 @@ async def button(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
             for col in range(5):
                 row_buttons.append(InlineKeyboardButton(f"{row}-{col}", callback_data=f"zone_{row}_{col}"))
             keyboard.append(row_buttons)
+        
+        # Add a global summary button
+        keyboard.append([InlineKeyboardButton("📊 View Fleet Summary", callback_data="fleet_summary")])
+        
         reply_markup = InlineKeyboardMarkup(keyboard)
         await query.edit_message_text(
-            text='Select a zone from the 5x5 grid to view its latest health status:', 
+            text='Select a zone from the 5x5 grid or click "View Fleet Summary" to see the overall farm status:', 
             reply_markup=reply_markup
         )
 
@@ -125,6 +200,7 @@ def main() -> None:
     # Handlers
     application.add_handler(CommandHandler("start", start))
     application.add_handler(CommandHandler("zones", start))
+    application.add_handler(CommandHandler("summary", summary_command))
     application.add_handler(CallbackQueryHandler(button))
 
     # Run polling

@@ -1,5 +1,25 @@
 [
   {
+    "zone": "Zone (0,3)",
+    "row": 0,
+    "col": 3,
+    "score": 9,
+    "health": "good",
+    "description": "An aerial view showing a lush, healthy, and uniformly planted orchard with very consistent growth across all rows. \ud83d\udcc8 Trend: Sasi, the health improved (+7) since previous analysis.",
+    "imageName": "good_crop.jpeg",
+    "timestamp": "6:48:50 AM"
+  },
+  {
+    "zone": "Zone (0,1)",
+    "row": 0,
+    "col": 1,
+    "score": 9,
+    "health": "good",
+    "description": "An aerial view shows a healthy, well-maintained vineyard or orchard with orderly, uniform rows of green vegetation. \ud83d\udcc8 Trend: Sasi, the health improved (+7) since previous analysis.",
+    "imageName": "good_crop.jpeg",
+    "timestamp": "6:42:15 AM"
+  },
+  {
     "zone": "Zone (1,0)",
     "row": 1,
     "col": 0,

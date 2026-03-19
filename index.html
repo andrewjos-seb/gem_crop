@@ -1307,6 +1307,7 @@
     </div>
     <div class="header-right">
       <span id="userGreeting" style="font-family: 'Syne', sans-serif; font-weight: 700; color: var(--green); display: none; font-size: 14px;"></span>
+      <button class="btn-zone-history" onclick="exportHistoryJSON()" title="Export all analysis data as JSON">📥 Export Report</button>
       <button class="btn-zone-history" onclick="scrollToHistory()" title="View zone analysis history">📊 Zone History</button>
       <div class="badge">SDG 2 · Zero Hunger</div>
     </div>
@@ -1387,6 +1388,14 @@
     <div class="tab-content active" id="tab-content-current">
       <div class="results-grid">
 
+      <!-- Zone Summary Card (NEW) -->
+      <div class="card card-full" id="zoneSummaryCard" style="display: none;">
+        <div class="card-title">Zone Status Summary</div>
+        <div id="zoneSummaryContent" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px;">
+          <!-- Summary stats and critical zones will be injected here -->
+        </div>
+      </div>
+
       <!-- Zone Grid 5x5 -->
       <div class="card card-full">
         <div class="card-title">Zone Health Map (5×5)</div>
@@ -1463,9 +1472,17 @@
   <!-- Analysis History -->
   <div class="analysis-history" id="historyPanel">
     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
-      <div class="history-title" style="margin-bottom: 0;">Analysis History</div>
+      <div class="history-title" style="margin-bottom: 0;">Analysis History & Fleet Summary</div>
       <button onclick="clearAllHistory()" style="background: none; border: 1px solid var(--border); color: var(--muted); padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 11px; transition: all 0.2s;" title="Clear all history">🗑 Clear</button>
     </div>
+
+    <!-- Global Summary Card -->
+    <div id="globalZoneSummary" style="margin-bottom: 24px; display: none;">
+      <div id="globalZoneSummaryContent" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px;">
+        <!-- Summary stats injected here -->
+      </div>
+    </div>
+
     <div class="history-grid-layout">
       <div class="zone-grid-container" style="margin-bottom: 0;">
         <div style="font-size: 13px; color: var(--muted); margin-bottom: 12px;">Global history map (click to explore)</div>
@@ -1667,6 +1684,31 @@
     if (fileInput.files[0]) loadFile(fileInput.files[0]);
   });
 
+  function exportHistoryJSON() {
+    if (analysisHistory.length === 0) {
+      alert("No analysis history available to export.");
+      return;
+    }
+
+    const reportData = {
+      project: "Krishikaran — Aerial Crop Intelligence",
+      export_date: new Date().toLocaleString(),
+      user: currentUser || "Anonymous",
+      total_records: analysisHistory.length,
+      history: analysisHistory
+    };
+
+    const blob = new Blob([JSON.stringify(reportData, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `krishikaran_report_${new Date().toISOString().split('T')[0]}.json`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  }
+
   function loadFile(file) {
     fileName.textContent = file.name;
     currentImageName = file.name; // Track image for history
@@ -1812,7 +1854,7 @@
         } else {
           // Empty/unanalyzed cell
           cell.className = 'zone-cell avg';
-          cell.opacity = '0.5';
+          cell.style.opacity = '0.5';
           cell.innerHTML = `
             <div class="zone-score" style="opacity:0.5;">—</div>
             <div class="zone-label">(${row},${col})</div>
@@ -1892,7 +1934,108 @@
       }
     }
     
+    // Render Zone Summary
+    renderZoneSummary();
+    
     results.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  function renderZoneSummary() {
+    const summaryCard = document.getElementById('zoneSummaryCard');
+    const summaryContent = document.getElementById('zoneSummaryContent');
+    const globalSummaryCard = document.getElementById('globalZoneSummary');
+    const globalSummaryContent = document.getElementById('globalZoneSummaryContent');
+    
+    if (analysisHistory.length === 0) {
+      if (summaryCard) summaryCard.style.display = 'none';
+      if (globalSummaryCard) globalSummaryCard.style.display = 'none';
+      return;
+    }
+
+    if (summaryCard) summaryCard.style.display = 'block';
+    if (globalSummaryCard) globalSummaryCard.style.display = 'block';
+
+    // Group by zone to get the LATEST status for each
+    const latestZoneStatus = {};
+    analysisHistory.forEach(item => {
+      const key = `${item.row}-${item.col}`;
+      // Since history is newest first, the first one we see is the latest
+      if (!latestZoneStatus[key]) {
+        latestZoneStatus[key] = item;
+      }
+    });
+
+    const totalAnalyzed = Object.keys(latestZoneStatus).length;
+    let goodCount = 0;
+    let avgCount = 0;
+    let badCount = 0;
+    const criticalZones = [];
+    const attentionZones = [];
+
+    Object.values(latestZoneStatus).forEach(item => {
+      if (item.health === 'good') goodCount++;
+      else if (item.health === 'avg') {
+        avgCount++;
+        attentionZones.push(item);
+      } else if (item.health === 'bad') {
+        badCount++;
+        criticalZones.push(item);
+      }
+    });
+
+    const summaryHtml = `
+      <!-- Stats -->
+      <div style="background: var(--surface2); padding: 16px; border-radius: 12px; border: 1px solid var(--border);">
+        <div style="font-size: 12px; color: var(--muted); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 1px;">Fleet Overview</div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+          <div>
+            <div style="font-size: 24px; font-weight: 800; color: var(--text);">${totalAnalyzed}</div>
+            <div style="font-size: 10px; color: var(--muted);">Zones Analyzed</div>
+          </div>
+          <div>
+            <div style="font-size: 24px; font-weight: 800; color: var(--good);">${goodCount}</div>
+            <div style="font-size: 10px; color: var(--muted);">Healthy</div>
+          </div>
+          <div>
+            <div style="font-size: 24px; font-weight: 800; color: var(--avg);">${avgCount}</div>
+            <div style="font-size: 10px; color: var(--muted);">At Risk</div>
+          </div>
+          <div>
+            <div style="font-size: 24px; font-weight: 800; color: var(--bad);">${badCount}</div>
+            <div style="font-size: 10px; color: var(--muted);">Critical</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Critical List -->
+      <div style="background: var(--surface2); padding: 16px; border-radius: 12px; border: 1px solid var(--border);">
+        <div style="font-size: 12px; color: var(--bad); margin-bottom: 12px; text-transform: uppercase; letter-spacing: 1px; font-weight: 700;">Critical Attention Needed</div>
+        <div style="display: flex; flex-direction: column; gap: 8px; max-height: 150px; overflow-y: auto;">
+          ${criticalZones.length > 0 ? criticalZones.map(z => `
+            <div style="display: flex; align-items: center; justify-content: space-between; background: rgba(248,113,113,0.1); padding: 8px 12px; border-radius: 6px; border-left: 3px solid var(--bad);">
+              <span style="font-size: 13px; font-weight: 600;">Zone (${z.row},${z.col})</span>
+              <span style="font-size: 11px; font-family: 'DM Mono', monospace; background: var(--bad); color: #0a0f0a; padding: 2px 6px; border-radius: 4px; font-weight: 700;">SCORE ${z.score}</span>
+            </div>
+          `).join('') : '<div style="font-size: 12px; color: var(--muted);">No critical zones detected.</div>'}
+        </div>
+      </div>
+
+      <!-- Warning List -->
+      <div style="background: var(--surface2); padding: 16px; border-radius: 12px; border: 1px solid var(--border);">
+        <div style="font-size: 12px; color: var(--avg); margin-bottom: 12px; text-transform: uppercase; letter-spacing: 1px; font-weight: 700;">Performance Warnings</div>
+        <div style="display: flex; flex-direction: column; gap: 8px; max-height: 150px; overflow-y: auto;">
+          ${attentionZones.length > 0 ? attentionZones.map(z => `
+            <div style="display: flex; align-items: center; justify-content: space-between; background: rgba(251,191,36,0.1); padding: 8px 12px; border-radius: 6px; border-left: 3px solid var(--avg);">
+              <span style="font-size: 13px; font-weight: 600;">Zone (${z.row},${z.col})</span>
+              <span style="font-size: 11px; font-family: 'DM Mono', monospace; background: var(--avg); color: #0a0f0a; padding: 2px 6px; border-radius: 4px; font-weight: 700;">SCORE ${z.score}</span>
+            </div>
+          `).join('') : '<div style="font-size: 12px; color: var(--muted);">No warnings at this time.</div>'}
+        </div>
+      </div>
+    `;
+
+    if (summaryContent) summaryContent.innerHTML = summaryHtml;
+    if (globalSummaryContent) globalSummaryContent.innerHTML = summaryHtml;
   }
 
   function saveToHistory(row, col, score, health, description, imageName) {
@@ -1913,10 +2056,12 @@
   function renderHistory() {
     renderHistoryGrid('historyGrid', 'historyDetails');
     renderHistoryGrid('tabHistoryGrid', 'tabHistoryDetails');
-    
+
+    // Update zone summary
+    renderZoneSummary();
+
     // Refresh details if a zone was selected
-    if (selectedHistoryZone) {
-      const { row, col } = selectedHistoryZone;
+    if (selectedHistoryZone) {      const { row, col } = selectedHistoryZone;
       showHistoryZoneDetails(row, col, 'historyDetails', 'historyGrid', false);
       showHistoryZoneDetails(row, col, 'tabHistoryDetails', 'tabHistoryGrid', false);
     }
