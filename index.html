@@ -589,6 +589,73 @@
   .action-text { font-weight: 500; font-size: 14px; }
   .action-reason { font-size: 13px; color: var(--muted); margin-top: 2px; }
 
+  /* Zone Grid 5x5 */
+  .zone-grid-container {
+    background: var(--surface2);
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 20px;
+  }
+
+  .zone-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 8px;
+    margin-bottom: 16px;
+  }
+
+  .zone-cell {
+    aspect-ratio: 1;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    cursor: pointer;
+    transition: all 0.2s;
+    border: 1px solid rgba(255,255,255,0.1);
+    font-size: 12px;
+    font-weight: 600;
+    text-align: center;
+    padding: 4px;
+  }
+
+  .zone-cell:hover { transform: scale(1.05); box-shadow: 0 0 12px currentColor; }
+
+  .zone-cell.good {
+    background: linear-gradient(135deg, rgba(74,222,128,0.2), rgba(74,222,128,0.1));
+    color: var(--good);
+    border-color: rgba(74,222,128,0.3);
+  }
+
+  .zone-cell.avg {
+    background: linear-gradient(135deg, rgba(251,191,36,0.2), rgba(251,191,36,0.1));
+    color: var(--avg);
+    border-color: rgba(251,191,36,0.3);
+  }
+
+  .zone-cell.bad {
+    background: linear-gradient(135deg, rgba(248,113,113,0.2), rgba(248,113,113,0.1));
+    color: var(--bad);
+    border-color: rgba(248,113,113,0.3);
+  }
+
+  .zone-score { font-size: 14px; font-weight: 700; }
+  .zone-label { font-size: 10px; opacity: 0.7; margin-top: 2px; }
+
+  .grid-legend {
+    display: flex;
+    justify-content: center;
+    gap: 24px;
+    font-size: 12px;
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px solid var(--border);
+  }
+
+  .legend-item { display: flex; align-items: center; gap: 6px; }
+  .legend-dot { width: 12px; height: 12px; border-radius: 3px; }
+
   /* Reset button */
   .btn-reset {
     margin: 32px auto 0;
@@ -703,6 +770,28 @@
     </div>
 
     <div class="results-grid">
+
+      <!-- Zone Grid 5x5 -->
+      <div class="card card-full">
+        <div class="card-title">Zone Health Map (5×5)</div>
+        <div class="zone-grid-container">
+          <div class="zone-grid" id="zoneGridContainer"></div>
+          <div class="grid-legend">
+            <div class="legend-item">
+              <div class="legend-dot" style="background: var(--good); box-shadow: 0 0 6px var(--good);"></div>
+              <span>Good (75-100)</span>
+            </div>
+            <div class="legend-item">
+              <div class="legend-dot" style="background: var(--avg); box-shadow: 0 0 6px var(--avg);"></div>
+              <span>Average (40-74)</span>
+            </div>
+            <div class="legend-item">
+              <div class="legend-dot" style="background: var(--bad); box-shadow: 0 0 6px var(--bad);"></div>
+              <span>Bad (0-39)</span>
+            </div>
+          </div>
+        </div>
+      </div>
 
       <!-- Zones -->
       <div class="card">
@@ -845,6 +934,43 @@
     setTimeout(() => {
       document.getElementById('confFill').style.width = score + '%';
     }, 100);
+
+    // Render 5x5 Zone Grid
+    const zoneGrid = document.getElementById('zoneGridContainer');
+    zoneGrid.innerHTML = '';
+    
+    if (data.zone_grid && data.zone_grid.length > 0) {
+      // Create all 25 cells (5x5)
+      for (let row = 0; row < 5; row++) {
+        for (let col = 0; col < 5; col++) {
+          const zoneData = data.zone_grid.find(z => z.row === row && z.col === col);
+          
+          if (zoneData) {
+            const hk = healthClass(zoneData.health);
+            const score = zoneData.score || 0;
+            const rowCol = `${row}-${col}`;
+            
+            const cell = document.createElement('div');
+            cell.className = `zone-cell ${hk}`;
+            cell.title = `Zone (${row},${col}): ${zoneData.description || 'No description'}`;
+            cell.innerHTML = `
+              <div class="zone-score">${score}</div>
+              <div class="zone-label">(${row},${col})</div>
+            `;
+            zoneGrid.appendChild(cell);
+          } else {
+            // Create empty cell if data missing
+            const cell = document.createElement('div');
+            cell.className = 'zone-cell avg';
+            cell.innerHTML = `
+              <div class="zone-score">—</div>
+              <div class="zone-label">(${row},${col})</div>
+            `;
+            zoneGrid.appendChild(cell);
+          }
+        }
+      }
+    }
 
     // Zones
     const zc = document.getElementById('zonesContainer');
