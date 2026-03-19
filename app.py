@@ -11,7 +11,7 @@ CORS(app)
 GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY")
 genai.configure(api_key=GEMINI_API_KEY)
 
-SYSTEM_PROMPT = """You are CropSight, an expert agricultural AI that analyzes aerial drone/satellite farm images.
+SYSTEM_PROMPT = """You are Krishikaran, an expert agricultural AI that analyzes aerial drone/satellite farm images.
 
 You MUST divide the image into a 5x5 grid (25 zones total) and analyze each zone individually.
 
@@ -27,7 +27,17 @@ Analyze the provided aerial farm image and return ONLY a valid JSON response wit
       "col": 0,
       "health": "Good" or "Average" or "Bad",
       "score": <number 0-100>,
+      "score_1_10": <number 1-10 where 1-3=Bad, 4-6=Average, 7-10=Good>,
       "description": "<brief description of this zone>"
+    }
+  ],
+  "manual_zones": [
+    {
+      "zone_id": "Zone-1",
+      "health": "Good" or "Average" or "Bad",
+      "score_1_10": <number 1-10>,
+      "color_description": "<what you see in this zone>",
+      "analysis": "<detailed analysis of this zone>"
     }
   ],
   "zones": [
@@ -56,7 +66,11 @@ Analyze the provided aerial farm image and return ONLY a valid JSON response wit
 
 Rules:
 - CRITICAL: Analyze all 25 grid zones (5 rows × 5 columns), each with row (0-4) and col (0-4)
-- Each zone should have a health status and score (0-100)
+- Each grid zone should have:
+  * health status (Good/Average/Bad)
+  * score_0_100 (0-100 scale)
+  * score_1_10 (1-10 scale where 1=worst/bad, 10=best/good; 1-3=Bad, 4-6=Average, 7-10=Good)
+- If manual zones are provided by the user, include a "manual_zones" section analyzing only those zones with detailed analysis
 - Be specific and accurate to what you see in each zone
 - If the image is not a farm/crop image, still analyze the greenery present
 - Recommended actions should be practical for a smallholder farmer
@@ -75,6 +89,7 @@ def analyze():
             return jsonify({'error': 'No image provided'}), 400
 
         image_data = data['image']
+        manual_zones = data.get('manual_zones', None)
         mime_type = 'image/jpeg'
         if ',' in image_data:
             header, image_data = image_data.split(',', 1)
@@ -87,8 +102,17 @@ def analyze():
                 "data": image_data
             }
         }
+        
+        # Build prompt with manual zones info if provided
+        prompt_to_use = SYSTEM_PROMPT
+        if manual_zones and len(manual_zones) > 0:
+            zones_info = f"\n\nUSER-DEFINED ZONES TO ANALYZE:\nThe user has manually defined {len(manual_zones)} regions of interest on this image. Analyze each of these regions in detail:\n\n"
+            for i, z in enumerate(manual_zones, 1):
+                zones_info += f"- {z.get('id', f'Region {i}')}: Position X={z.get('x', 0)}px, Y={z.get('y', 0)}px, Width={z.get('width', 0)}px, Height={z.get('height', 0)}px\n"
+            zones_info += "\nProvide detailed analysis with score_1_10 (1-10 scale) for EACH user-defined zone in the 'manual_zones' section of your JSON response."
+            prompt_to_use = SYSTEM_PROMPT + zones_info
 
-        response = model.generate_content([SYSTEM_PROMPT, image_part])
+        response = model.generate_content([prompt_to_use, image_part])
         raw = response.text.strip()
 
         # Strip markdown fences if present
@@ -105,5 +129,5 @@ def analyze():
         return jsonify({'error': str(e)}), 500
 
 if __name__ == '__main__':
-    print("🌱 CropSight backend running on http://localhost:5000")
+    print("🌱 Krishikaran backend running on http://localhost:5000")
     app.run(debug=True, port=5000)
