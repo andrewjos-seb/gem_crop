@@ -1,0 +1,112 @@
+[
+  {
+    "zone": "Zone (1,0)",
+    "row": 1,
+    "col": 0,
+    "score": 2,
+    "health": "bad",
+    "description": "The leaves show significant necrosis and discoloration, likely indicating a fungal infection or severe nutrient stress. \ud83d\udcc9 Trend: Sasi, the health declined (-8) since previous analysis.",
+    "imageName": "disease.jpeg",
+    "timestamp": "12:59:47 AM"
+  },
+  {
+    "zone": "Zone (1,0)",
+    "row": 1,
+    "col": 0,
+    "score": 10,
+    "health": "good",
+    "description": "An aerial view of a meticulously maintained, vibrant green orchard with perfectly aligned rows of trees. \ud83d\udcc8 Trend: Sasi, the health improved (+1) since previous analysis.",
+    "imageName": "good_crop.jpeg",
+    "timestamp": "12:58:52 AM"
+  },
+  {
+    "zone": "Zone (1,0)",
+    "row": 1,
+    "col": 0,
+    "score": 9,
+    "health": "good",
+    "description": "An aerial view shows a healthy, well-maintained vineyard or orchard with perfectly aligned rows and consistent foliage density. \ud83d\udcc9 Trend: Health declined (-1) since previous analysis.",
+    "imageName": "good_crop.jpeg",
+    "timestamp": "12:52:20 AM"
+  },
+  {
+    "zone": "Zone (1,0)",
+    "row": 1,
+    "col": 0,
+    "score": 10,
+    "health": "good",
+    "description": "An aerial view of a meticulously maintained, vibrant green orchard with perfectly aligned rows of trees. \ud83d\udcc8 Trend: Health improved (+8) since previous analysis.",
+    "imageName": "good_crop.jpeg",
+    "timestamp": "12:51:29 AM"
+  },
+  {
+    "zone": "Zone (0,3)",
+    "row": 0,
+    "col": 3,
+    "score": 2,
+    "health": "bad",
+    "description": "The leaves show significant necrosis and browning, likely indicating a fungal infection or severe nutrient stress.",
+    "imageName": "disease.jpeg",
+    "timestamp": "12:44:13 AM"
+  },
+  {
+    "zone": "Zone (0,2)",
+    "row": 0,
+    "col": 2,
+    "score": 2,
+    "health": "bad",
+    "description": "Leaves show advanced necrotic lesions and browning indicative of pathogenic infection.",
+    "imageName": "disease.jpeg",
+    "timestamp": "12:27:57 AM"
+  },
+  {
+    "zone": "Zone (1,4)",
+    "row": 1,
+    "col": 4,
+    "score": 2,
+    "health": "bad",
+    "description": "Severe tissue necrosis and browning visible on leaves, indicating significant fungal pathogen activity.",
+    "imageName": "disease.jpeg",
+    "timestamp": "12:19:28 AM"
+  },
+  {
+    "zone": "Zone (1,0)",
+    "row": 1,
+    "col": 0,
+    "score": 2,
+    "health": "bad",
+    "description": "Visible severe browning, tissue necrosis, and leaf margin decay affecting the primary foliage structures.",
+    "imageName": "disease.jpeg",
+    "timestamp": "11:58:00 PM"
+  },
+  {
+    "zone": "Zone (2,1)",
+    "row": 2,
+    "col": 1,
+    "score": 8,
+    "health": "good",
+    "description": "Vegetation displays strong, uniform development with healthy foliage density throughout the rows.",
+    "imageName": "good_crop.jpeg",
+    "timestamp": "11:57:42 PM"
+  },
+  {
+    "zone": "Zone (0,1)",
+    "row": 0,
+    "col": 1,
+    "score": 2,
+    "health": "bad",
+    "description": "Significant marginal and interveinal necrosis observed on the leaf tissues, indicating severe pathological distress.",
+    "imageName": "disease.jpeg",
+    "timestamp": "11:47:39 PM"
+  },
+  {
+    "zone": "Zone (0,2)",
+    "row": 0,
+    "col": 2,
+    "score": 9,
+    "health": "good",
+    "description": "Top-middle sector featuring healthy vine rows and optimal foliage density.",
+    "imageName": "good_crop.jpeg",
+    "timestamp": "11:47:12 PM"
+  }
+]

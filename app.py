@@ -4,6 +4,9 @@ import google.generativeai as genai
 import json
 import os
 import re
+import base64
+import io
+from PIL import Image
 
 app = Flask(__name__, static_folder='.')
 CORS(app)
@@ -11,75 +14,89 @@ CORS(app)
 GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY")
 genai.configure(api_key=GEMINI_API_KEY)
 
-SYSTEM_PROMPT = """You are Krishikaran, an expert agricultural AI that analyzes aerial drone/satellite farm images.
-
-You MUST divide the image into a 5x5 grid (25 zones total) and analyze each zone individually.
-
-Analyze the provided aerial farm image and return ONLY a valid JSON response with this exact structure:
-
+SYSTEM_PROMPT = """Analyze this farm zone image. Return ONLY a valid JSON with two fields:
 {
-  "overall_health": "Good" or "Average" or "Bad",
-  "confidence_score": <number 0-100>,
-  "summary": "<2-3 sentence plain English summary for a farmer>",
-  "zone_grid": [
-    {
-      "row": 0,
-      "col": 0,
-      "health": "Good" or "Average" or "Bad",
-      "score": <number 0-100>,
-      "score_1_10": <number 1-10 where 1-3=Bad, 4-6=Average, 7-10=Good>,
-      "description": "<brief description of this zone>"
-    }
-  ],
-  "manual_zones": [
-    {
-      "zone_id": "Zone-1",
-      "health": "Good" or "Average" or "Bad",
-      "score_1_10": <number 1-10>,
-      "color_description": "<what you see in this zone>",
-      "analysis": "<detailed analysis of this zone>"
-    }
-  ],
-  "zones": [
-    {
-      "zone_id": "Zone A",
-      "health": "Good" or "Average" or "Bad",
-      "coverage_percent": <estimated % of image>,
-      "color_description": "<what you see: lush green, yellowing, brown patches, etc>"
-    }
-  ],
-  "detected_issues": [
-    {
-      "issue": "<issue name e.g. Nitrogen Deficiency>",
-      "severity": "Low" or "Medium" or "High",
-      "description": "<1 sentence explanation>"
-    }
-  ],
-  "recommended_actions": [
-    {
-      "priority": "Immediate" or "This Week" or "Monitor",
-      "action": "<specific actionable step>",
-      "reason": "<why this action is needed>"
-    }
-  ]
+  "score": <number 1-10 where 1=worst, 10=best>,
+  "summary": "<1 brief sentence describing what you see>"
 }
-
-Rules:
-- CRITICAL: Analyze all 25 grid zones (5 rows × 5 columns), each with row (0-4) and col (0-4)
-- Each grid zone should have:
-  * health status (Good/Average/Bad)
-  * score_0_100 (0-100 scale)
-  * score_1_10 (1-10 scale where 1=worst/bad, 10=best/good; 1-3=Bad, 4-6=Average, 7-10=Good)
-- If manual zones are provided by the user, include a "manual_zones" section analyzing only those zones with detailed analysis
-- Be specific and accurate to what you see in each zone
-- If the image is not a farm/crop image, still analyze the greenery present
-- Recommended actions should be practical for a smallholder farmer
-- Always return valid JSON only, no markdown, no extra text
 """
+
+HISTORY_FILE = 'analysis_history.json'
+
+def load_history():
+    """Load analysis history from JSON file"""
+    if os.path.exists(HISTORY_FILE):
+        try:
+            with open(HISTORY_FILE, 'r') as f:
+                return json.load(f)
+        except:
+            return []
+    return []
+
+def save_history(history):
+    """Save analysis history to JSON file"""
+    try:
+        with open(HISTORY_FILE, 'w') as f:
+            json.dump(history, f, indent=2)
+        return True
+    except Exception as e:
+        print(f"Error saving history: {e}")
+        return False
 
 @app.route('/')
 def index():
     return send_from_directory('.', 'index.html')
+
+@app.route('/load-history', methods=['GET'])
+def get_history():
+    """Load analysis history from file"""
+    history = load_history()
+    return jsonify({'success': True, 'data': history})
+
+@app.route('/save-history', methods=['POST'])
+def add_to_history():
+    """Save analysis history item"""
+    try:
+        data = request.get_json()
+        if not data:
+            return jsonify({'error': 'No data provided'}), 400
+        
+        history = load_history()
+        # Add new item to the beginning (newest first)
+        history.insert(0, data)
+        
+        # Keep only last 100 items to avoid file getting too large
+        history = history[:100]
+        
+        if save_history(history):
+            return jsonify({'success': True, 'data': history})
+        else:
+            return jsonify({'error': 'Failed to save history'}), 500
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/delete-history/<int:index>', methods=['DELETE'])
+def delete_history_item(index):
+    """Delete a history item by index"""
+    try:
+        history = load_history()
+        if 0 <= index < len(history):
+            history.pop(index)
+            if save_history(history):
+                return jsonify({'success': True, 'data': history})
+        return jsonify({'error': 'Invalid index'}), 400
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/clear-history', methods=['DELETE'])
+def clear_all_history():
+    """Clear all history"""
+    try:
+        if save_history([]):
+            return jsonify({'success': True, 'data': []})
+        return jsonify({'error': 'Failed to clear history'}), 500
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 
 @app.route('/analyze', methods=['POST'])
 def analyze():
@@ -89,28 +106,36 @@ def analyze():
             return jsonify({'error': 'No image provided'}), 400
 
         image_data = data['image']
-        manual_zones = data.get('manual_zones', None)
+        selected_zones = data.get('selected_zones', None)
         mime_type = 'image/jpeg'
         if ',' in image_data:
             header, image_data = image_data.split(',', 1)
             mime_type = header.split(':')[1].split(';')[0]
 
-        model = genai.GenerativeModel('gemini-3-flash-preview')
+        # Resize image to save tokens
+        img_bytes = base64.b64decode(image_data)
+        img = Image.open(io.BytesIO(img_bytes))
+        
+        # Calculate new size maintaining aspect ratio (max 128x128 for lowest possible quota usage)
+        max_size = (128, 128)
+        resample_filter = getattr(Image, 'Resampling', Image).LANCZOS
+        img.thumbnail(max_size, resample_filter)
+        
+        # Convert back to base64
+        buffered = io.BytesIO()
+        img_format = 'JPEG' if mime_type == 'image/jpeg' else 'PNG'
+        img.save(buffered, format=img_format, quality=85)
+        resized_image_data = base64.b64encode(buffered.getvalue()).decode('utf-8')
+
+        model = genai.GenerativeModel('gemini-3.1-flash-lite-preview')
         image_part = {
             "inline_data": {
                 "mime_type": mime_type,
-                "data": image_data
+                "data": resized_image_data
             }
         }
         
-        # Build prompt with manual zones info if provided
         prompt_to_use = SYSTEM_PROMPT
-        if manual_zones and len(manual_zones) > 0:
-            zones_info = f"\n\nUSER-DEFINED ZONES TO ANALYZE:\nThe user has manually defined {len(manual_zones)} regions of interest on this image. Analyze each of these regions in detail:\n\n"
-            for i, z in enumerate(manual_zones, 1):
-                zones_info += f"- {z.get('id', f'Region {i}')}: Position X={z.get('x', 0)}px, Y={z.get('y', 0)}px, Width={z.get('width', 0)}px, Height={z.get('height', 0)}px\n"
-            zones_info += "\nProvide detailed analysis with score_1_10 (1-10 scale) for EACH user-defined zone in the 'manual_zones' section of your JSON response."
-            prompt_to_use = SYSTEM_PROMPT + zones_info
 
         response = model.generate_content([prompt_to_use, image_part])
         raw = response.text.strip()
@@ -120,8 +145,116 @@ def analyze():
         raw = re.sub(r'^```\s*', '', raw)
         raw = re.sub(r'\s*```$', '', raw)
 
-        result = json.loads(raw)
-        return jsonify({'success': True, 'data': result})
+        ai_result = json.loads(raw)
+        
+        # Fallback values if AI didn't return them correctly
+        score = ai_result.get('score', 5)
+        ai_summary = ai_result.get('summary', 'Analysis complete.')
+        
+        # --- TREND ANALYSIS LOGIC ---
+        trend_text = ""
+        if selected_zones and len(selected_zones) > 0:
+            row = selected_zones[0].get('row', 0)
+            col = selected_zones[0].get('col', 0)
+            
+            history = load_history()
+            # Find the most recent previous analysis for this zone
+            previous_score = None
+            for item in history:
+                if item.get('row') == row and item.get('col') == col:
+                    previous_score = item.get('score')
+                    break
+            
+            if previous_score is not None:
+                diff = score - previous_score
+                
+                # Personalized username logic
+                username = data.get('username')
+                user_prefix = f"{username.capitalize()}, the " if username else "The "
+                
+                if diff > 0:
+                    trend_text = f" 📈 Trend: {user_prefix}health improved (+{diff}) since previous analysis."
+                elif diff < 0:
+                    trend_text = f" 📉 Trend: {user_prefix}health declined (-{abs(diff)}) since previous analysis."
+                else:
+                    trend_text = f" ➖ Trend: {user_prefix}health remained stable since previous analysis."
+        
+        # Append trend to summary
+        ai_summary += trend_text
+        
+        # --- LOCAL GENERATION LOGIC ---
+        
+        # Determine overall health
+        if score >= 7:
+            overall_health = "Good"
+            confidence = 85 + score
+            issues = []
+            actions = [
+                {
+                    "priority": "Monitor",
+                    "action": "Maintain current practices",
+                    "reason": "Crop appears healthy with no immediate intervention needed."
+                }
+            ]
+        elif score >= 4:
+            overall_health = "Average"
+            confidence = 70 + score
+            issues = [
+                {
+                    "issue": "Suboptimal Growth",
+                    "severity": "Medium",
+                    "description": "Some areas show signs of stress or uneven development."
+                }
+            ]
+            actions = [
+                {
+                    "priority": "This Week",
+                    "action": "Check soil moisture and nutrient levels",
+                    "reason": "Early intervention can prevent further degradation."
+                }
+            ]
+        else:
+            overall_health = "Bad"
+            confidence = 90 - score
+            issues = [
+                {
+                    "issue": "Severe Crop Stress",
+                    "severity": "High",
+                    "description": "Visible signs of disease, severe nutrient deficiency, or drought."
+                }
+            ]
+            actions = [
+                {
+                    "priority": "Immediate",
+                    "action": "Conduct immediate physical inspection",
+                    "reason": "Critical issues detected requiring immediate mitigation to prevent loss."
+                }
+            ]
+
+        # Construct the final JSON payload expected by the frontend
+        final_result = {
+            "overall_health": overall_health,
+            "confidence_score": confidence,
+            "summary": ai_summary,
+            "zone_grid": [],
+            "detected_issues": issues,
+            "recommended_actions": actions
+        }
+
+        # If specific zones were selected, put the result in those zones
+        if selected_zones and len(selected_zones) > 0:
+            for zone in selected_zones:
+                row = zone.get('row', 0)
+                col = zone.get('col', 0)
+                final_result["zone_grid"].append({
+                    "row": row,
+                    "col": col,
+                    "health": overall_health,
+                    "score_1_10": score,
+                    "description": ai_summary
+                })
+
+        return jsonify({'success': True, 'data': final_result})
 
     except json.JSONDecodeError as e:
         return jsonify({'error': f'AI response parse error: {str(e)}', 'raw': response.text if 'response' in locals() else ''}), 500
@@ -130,4 +263,5 @@ def analyze():
 
 if __name__ == '__main__':
     print("🌱 Krishikaran backend running on http://localhost:5000")
+    print(f"📊 Analysis history will be saved to: {HISTORY_FILE}")
     app.run(debug=True, port=5000)

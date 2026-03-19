@@ -74,6 +74,38 @@
     z-index: 1;
   }
 
+  header {
+    padding: 32px 0 24px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .header-right {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+
+  .btn-zone-history {
+    background: none;
+    border: 1px solid var(--border);
+    color: var(--text);
+    font-size: 12px;
+    font-weight: 600;
+    padding: 8px 16px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-family: 'DM Sans', sans-serif;
+  }
+
+  .btn-zone-history:hover {
+    border-color: var(--green);
+    color: var(--green);
+  }
+
   /* ── HEADER ── */
   header {
     padding: 32px 0 24px;
@@ -287,101 +319,48 @@
     display: block;
   }
 
-  #zoneCanvas {
-    position: absolute;
-    top: 0;
-    left: 0;
-    cursor: crosshair;
-    display: none;
-  }
-
-  #zoneCanvas.active { display: block; }
-
-  .zone-editor-panel {
+  /* Zone Selector */
+  .zone-selector-panel {
     display: none;
     background: var(--surface2);
     border-top: 1px solid var(--border);
     padding: 16px;
-    gap: 12px;
   }
 
-  .zone-editor-panel.show { display: flex; flex-direction: column; }
+  .zone-selector-panel.show { display: block; }
 
-  .zone-editor-controls {
-    display: flex;
-    gap: 8px;
-    flex-wrap: wrap;
-    align-items: center;
-  }
-
-  .btn-zone-mode {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    background: rgba(74,222,128,0.15);
-    color: var(--green);
-    font-family: 'DM Mono', monospace;
-    font-weight: 500;
-    font-size: 12px;
-    letter-spacing: 0.5px;
-    padding: 8px 16px;
-    border-radius: 6px;
-    border: 1px solid rgba(74,222,128,0.3);
-    cursor: pointer;
-    transition: all 0.2s;
-  }
-
-  .btn-zone-mode:hover { background: rgba(74,222,128,0.25); border-color: rgba(74,222,128,0.5); }
-  .btn-zone-mode.active { background: var(--green); color: #0a0f0a; }
-
-  .btn-zone-clear {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    background: rgba(248,113,113,0.15);
-    color: var(--bad);
-    font-family: 'DM Mono', monospace;
-    font-weight: 500;
-    font-size: 12px;
-    padding: 8px 16px;
-    border-radius: 6px;
-    border: 1px solid rgba(248,113,113,0.3);
-    cursor: pointer;
-    transition: all 0.2s;
-  }
-
-  .btn-zone-clear:hover { background: rgba(248,113,113,0.25); }
-
-  .zone-list {
-    display: flex;
-    flex-wrap: wrap;
+  .zone-selector-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
     gap: 8px;
   }
 
-  .zone-tag {
-    display: inline-flex;
+  .zone-selector-cell {
+    aspect-ratio: 1;
+    border-radius: 8px;
+    display: flex;
     align-items: center;
-    gap: 6px;
-    background: rgba(74,222,128,0.1);
-    color: var(--green);
-    font-family: 'DM Mono', monospace;
-    font-size: 11px;
-    padding: 4px 10px;
-    border-radius: 12px;
-    border: 1px solid rgba(74,222,128,0.2);
-  }
-
-  .zone-tag button {
-    background: none;
-    border: none;
-    color: var(--green);
+    justify-content: center;
     cursor: pointer;
+    transition: all 0.2s;
+    border: 2px solid var(--border);
+    background: var(--surface);
     font-weight: 700;
     font-size: 12px;
-    padding: 0;
+    color: var(--muted);
   }
 
-  .zone-tag button:hover { opacity: 0.7; }
+  .zone-selector-cell:hover {
+    border-color: var(--green);
+    background: var(--surface2);
+  }
+
+  .zone-selector-cell.selected {
+    background: var(--green);
+    color: #0a0f0a;
+    border-color: var(--green);
+    box-shadow: 0 0 12px rgba(74,222,128,0.4);
+  }
 
   .preview-overlay {
     position: absolute;
@@ -468,6 +447,7 @@
   #results { display: none; }
   #results.show { display: block; animation: fadeUp 0.5s forwards; }
 
+  /* Zone Chart Bar at Top */
   .results-header {
     display: flex;
     align-items: center;
@@ -720,6 +700,7 @@
     font-weight: 600;
     text-align: center;
     padding: 4px;
+    position: relative;
   }
 
   .zone-cell:hover { transform: scale(1.05); box-shadow: 0 0 12px currentColor; }
@@ -742,6 +723,60 @@
     border-color: rgba(248,113,113,0.3);
   }
 
+  .zone-cell.selected {
+    border: 2px solid var(--green) !important;
+    box-shadow: 0 0 15px var(--green-glow);
+    transform: scale(1.05);
+    z-index: 10;
+  }
+
+  .zone-history-badge {
+    position: absolute;
+    top: 2px;
+    right: 2px;
+    background: var(--green);
+    color: var(--bg);
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+    font-weight: 700;
+    box-shadow: 0 0 8px rgba(74,222,128,0.5);
+  }
+
+  .zone-track-btn {
+    position: absolute;
+    bottom: 2px;
+    right: 2px;
+    background: rgba(0,0,0,0.6);
+    border: 1px solid var(--border);
+    color: var(--text);
+    width: 18px;
+    height: 18px;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+    cursor: pointer;
+    padding: 0;
+    transition: all 0.2s;
+  }
+
+  .zone-track-btn:hover {
+    background: var(--green);
+    color: var(--bg);
+    border-color: var(--green);
+  }
+
+  .zone-cell.tracked {
+    border: 2px solid var(--green);
+    box-shadow: 0 0 12px rgba(74,222,128,0.3);
+  }
+
   .zone-score { font-size: 14px; font-weight: 700; }
   .zone-label { font-size: 10px; opacity: 0.7; margin-top: 2px; }
 
@@ -757,6 +792,283 @@
 
   .legend-item { display: flex; align-items: center; gap: 6px; }
   .legend-dot { width: 12px; height: 12px; border-radius: 3px; }
+
+  /* Analysis History */
+  .analysis-history {
+    background: var(--surface2);
+    border-radius: 12px;
+    padding: 16px;
+    margin-top: 24px;
+    border: 1px solid var(--border);
+  }
+
+  .history-title {
+    font-family: 'Syne', sans-serif;
+    font-weight: 700;
+    font-size: 13px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .history-title::before {
+    content: '';
+    width: 4px;
+    height: 14px;
+    background: var(--green);
+    border-radius: 2px;
+    display: block;
+  }
+
+  .history-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    max-height: 400px;
+    overflow-y: auto;
+  }
+
+  .history-item {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 12px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    transition: all 0.2s;
+  }
+
+  .history-item:hover {
+    border-color: var(--green);
+    background: var(--surface2);
+  }
+
+  .history-score {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 14px;
+    flex-shrink: 0;
+  }
+
+  .history-score.good {
+    background: rgba(74,222,128,0.2);
+    color: var(--good);
+    border: 2px solid var(--good);
+  }
+
+  .history-score.avg {
+    background: rgba(251,191,36,0.2);
+    color: var(--avg);
+    border: 2px solid var(--avg);
+  }
+
+  .history-score.bad {
+    background: rgba(248,113,113,0.2);
+    color: var(--bad);
+    border: 2px solid var(--bad);
+  }
+
+  .history-info {
+    flex: 1;
+  }
+
+  .history-zone {
+    font-weight: 600;
+    font-size: 13px;
+    color: var(--text);
+  }
+
+  .history-desc {
+    font-size: 12px;
+    color: var(--muted);
+    margin-top: 2px;
+  }
+
+  .history-delete {
+    background: none;
+    border: none;
+    color: var(--muted);
+    cursor: pointer;
+    font-size: 14px;
+    padding: 4px 8px;
+    transition: all 0.2s;
+  }
+
+  .history-delete:hover {
+    color: var(--bad);
+  }
+
+  .no-history {
+    text-align: center;
+    color: var(--muted);
+    font-size: 13px;
+    padding: 24px;
+  }
+
+  .history-image-group {
+    margin-bottom: 16px;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 12px;
+  }
+
+  .history-image-group:last-child {
+    border-bottom: none;
+    margin-bottom: 0;
+    padding-bottom: 0;
+  }
+
+  .history-image-name {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--green);
+    letter-spacing: 0.5px;
+    margin-bottom: 8px;
+    padding-left: 4px;
+    text-transform: uppercase;
+  }
+
+  .history-image-group .history-item {
+    margin-left: 8px;
+  }
+
+  /* Tab Switcher */
+  .results-tabs {
+    display: flex;
+    gap: 8px;
+    margin: 24px 0 16px 0;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 8px;
+  }
+
+  .tab-btn {
+    background: none;
+    border: none;
+    color: var(--muted);
+    font-size: 13px;
+    font-weight: 600;
+    padding: 8px 16px;
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    transition: all 0.2s;
+    font-family: 'DM Sans', sans-serif;
+  }
+
+  .tab-btn:hover {
+    color: var(--text);
+  }
+
+  .tab-btn.active {
+    color: var(--green);
+    border-bottom-color: var(--green);
+  }
+
+  .tab-content {
+    display: none;
+  }
+
+  .tab-content.active {
+    display: block;
+  }
+
+  /* History Graph */
+  .history-graph-container {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 24px;
+    margin-top: 16px;
+  }
+
+  .history-graph-group {
+    margin-bottom: 24px;
+  }
+
+  .history-graph-title {
+    font-family: 'Syne', sans-serif;
+    font-weight: 700;
+    font-size: 13px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--green);
+    margin-bottom: 12px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .history-zone-row {
+    display: grid;
+    grid-template-columns: 80px 1fr;
+    gap: 12px;
+    margin-bottom: 10px;
+    align-items: center;
+  }
+
+  .history-zone-label {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--muted);
+  }
+
+  .history-zone-bars {
+    display: flex;
+    gap: 4px;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+
+  .history-score-bar {
+    height: 24px;
+    min-width: 32px;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+    border: 1px solid rgba(255,255,255,0.1);
+  }
+
+  .history-score-bar:hover {
+    transform: scaleY(1.2);
+    box-shadow: 0 0 8px currentColor;
+  }
+
+  .history-score-bar.good {
+    background: rgba(74,222,128,0.2);
+    color: var(--good);
+    border-color: rgba(74,222,128,0.4);
+  }
+
+  .history-score-bar.avg {
+    background: rgba(251,191,36,0.2);
+    color: var(--avg);
+    border-color: rgba(251,191,36,0.4);
+  }
+
+  .history-score-bar.bad {
+    background: rgba(248,113,113,0.2);
+    color: var(--bad);
+    border-color: rgba(248,113,113,0.4);
+  }
+
+  .history-no-data {
+    text-align: center;
+    color: var(--muted);
+    padding: 32px 16px;
+    font-size: 13px;
+  }
 
   /* Reset button */
   .btn-reset {
@@ -792,6 +1104,172 @@
 
   .error-box.show { display: block; }
 
+  /* History Grid & Details Layout */
+  .history-grid-layout {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 32px;
+    margin-top: 16px;
+  }
+
+  @media (max-width: 900px) {
+    .history-grid-layout {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  .history-details-container {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px;
+    max-height: 500px;
+    overflow-y: auto;
+  }
+
+  .history-details-title {
+    font-family: 'Syne', sans-serif;
+    font-weight: 700;
+    font-size: 15px;
+    color: var(--green);
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .history-detail-item {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 12px;
+    margin-bottom: 12px;
+    transition: all 0.2s;
+  }
+
+  .history-detail-item:hover {
+    border-color: var(--green);
+  }
+
+  .history-detail-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+  }
+
+  .history-detail-image {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--text);
+  }
+
+  .history-detail-score {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 4px;
+  }
+
+  .history-detail-score.good { background: rgba(74,222,128,0.15); color: var(--good); }
+  .history-detail-score.avg  { background: rgba(251,191,36,0.15);  color: var(--avg);  }
+  .history-detail-score.bad  { background: rgba(248,113,113,0.15); color: var(--bad);  }
+
+  .history-detail-time {
+    font-size: 11px;
+    color: var(--muted);
+    margin-bottom: 8px;
+  }
+
+  .history-detail-desc {
+    font-size: 13px;
+    line-height: 1.5;
+    color: var(--text);
+  }
+
+  .no-zone-selected {
+    text-align: center;
+    color: var(--muted);
+    padding: 40px 20px;
+    font-size: 14px;
+    border: 1px dashed var(--border);
+    border-radius: 8px;
+  }
+
+  /* Login Overlay */
+  #loginOverlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(10, 15, 10, 0.95);
+    backdrop-filter: blur(10px);
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .login-box {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    padding: 40px;
+    border-radius: 16px;
+    width: 100%;
+    max-width: 400px;
+    text-align: center;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+  }
+  .login-box h2 {
+    font-family: 'Syne', sans-serif;
+    color: var(--text);
+    margin-bottom: 8px;
+    font-size: 24px;
+  }
+  .login-box p {
+    color: var(--muted);
+    font-size: 14px;
+    margin-bottom: 24px;
+  }
+  .login-input {
+    width: 100%;
+    padding: 14px 16px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--text);
+    border-radius: 8px;
+    margin-bottom: 16px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  .login-input:focus {
+    border-color: var(--green);
+  }
+  .login-btn {
+    width: 100%;
+    padding: 14px;
+    background: linear-gradient(135deg, #4ade80, #16a34a);
+    color: #0a0f0a;
+    border: none;
+    border-radius: 8px;
+    font-weight: 700;
+    font-family: 'Syne', sans-serif;
+    cursor: pointer;
+    font-size: 16px;
+    transition: transform 0.2s;
+  }
+  .login-btn:hover {
+    transform: translateY(-2px);
+  }
+  .login-error {
+    color: var(--bad);
+    font-size: 13px;
+    margin-top: 12px;
+    display: none;
+  }
+
   /* Footer */
   footer {
     text-align: center;
@@ -807,6 +1285,18 @@
 </head>
 <body>
 
+<!-- Login Overlay -->
+<div id="loginOverlay">
+  <div class="login-box">
+    <h2>Welcome Back</h2>
+    <p>Sign in to access your crop intelligence.</p>
+    <input type="text" id="loginUsername" class="login-input" placeholder="Username" />
+    <input type="password" id="loginPassword" class="login-input" placeholder="Password" />
+    <button class="login-btn" onclick="handleLogin()">Sign In</button>
+    <div id="loginError" class="login-error">Invalid username or password.</div>
+  </div>
+</div>
+
 <div class="container">
 
   <!-- HEADER -->
@@ -815,7 +1305,11 @@
       <div class="logo-icon">🌾</div>
       <div class="logo-text">Krishikaran</div>
     </div>
-    <div class="badge">SDG 2 · Zero Hunger</div>
+    <div class="header-right">
+      <span id="userGreeting" style="font-family: 'Syne', sans-serif; font-weight: 700; color: var(--green); display: none; font-size: 14px;"></span>
+      <button class="btn-zone-history" onclick="scrollToHistory()" title="View zone analysis history">📊 Zone History</button>
+      <div class="badge">SDG 2 · Zero Hunger</div>
+    </div>
   </header>
 
   <!-- HERO -->
@@ -840,22 +1334,21 @@
     <div class="preview-wrap" id="previewWrap">
       <div class="preview-container">
         <img id="preview" alt="Uploaded farm image" />
-        <canvas id="zoneCanvas"></canvas>
       </div>
-      <div class="zone-editor-panel" id="zoneEditorPanel">
-        <div class="zone-editor-controls">
-          <button class="btn-zone-mode" id="toggleZoneMode">✏️ Define Zones</button>
-          <button class="btn-zone-clear" id="clearZones">🗑️ Clear All</button>
-          <span style="font-size: 12px; color: var(--muted); margin-left: auto;" id="zoneHint"></span>
+      <div class="zone-selector-panel" id="zoneSelectorPanel">
+        <div style="margin-bottom: 16px;">
+          <div style="font-size: 14px; font-weight: 600; color: var(--text); margin-bottom: 12px;">Select one zone to analyze (click to select)</div>
+          <div class="zone-selector-grid" id="zoneSelectorGrid"></div>
         </div>
-        <div style="display: flex; gap: 12px; align-items: center;">
-          <div class="zone-list" id="zoneList"></div>
+        <div style="display: flex; gap: 12px; align-items: center; padding-top: 12px; border-top: 1px solid var(--border);">
+          <span style="font-size: 12px; color: var(--muted); margin-left: auto;" id="zoneCount">No zone selected</span>
+          <button class="btn-zone-clear" id="clearAllZones">✗ Clear</button>
         </div>
       </div>
       <div class="preview-overlay">
         <span class="preview-name" id="fileName">—</span>
         <button class="btn-analyze" id="analyzeBtn" onclick="analyze()">
-          🔬 &nbsp;Analyze Crop Health
+          🔬 &nbsp;Analyze Zone
         </button>
       </div>
     </div>
@@ -884,7 +1377,15 @@
       </div>
     </div>
 
-    <div class="results-grid">
+    <!-- Tab Switcher -->
+    <div class="results-tabs">
+      <button class="tab-btn active" onclick="switchTab('current')" id="tab-current">📊 Current Analysis</button>
+      <button class="tab-btn" onclick="switchTab('history')" id="tab-history">📈 Zone History</button>
+    </div>
+
+    <!-- Current Analysis Tab -->
+    <div class="tab-content active" id="tab-content-current">
+      <div class="results-grid">
 
       <!-- Zone Grid 5x5 -->
       <div class="card card-full">
@@ -926,9 +1427,68 @@
         <div id="actionsContainer"></div>
       </div>
 
+      </div>
     </div>
 
     <button class="btn-reset" onclick="reset()">↺ &nbsp;Analyze Another Image</button>
+
+    <!-- History Graph Tab -->
+    <div class="tab-content" id="tab-content-history">
+      <div class="history-grid-layout">
+        <div class="zone-grid-container" style="margin-bottom: 0;">
+          <div style="font-size: 13px; color: var(--muted); margin-bottom: 12px;">Historical data for all images (click a tile to see history)</div>
+          <div class="zone-grid" id="tabHistoryGrid"></div>
+          <div class="grid-legend">
+            <div class="legend-item">
+              <div class="legend-dot" style="background: var(--good); box-shadow: 0 0 6px var(--good);"></div>
+              <span>Good (7-10)</span>
+            </div>
+            <div class="legend-item">
+              <div class="legend-dot" style="background: var(--avg); box-shadow: 0 0 6px var(--avg);"></div>
+              <span>Average (4-6)</span>
+            </div>
+            <div class="legend-item">
+              <div class="legend-dot" style="background: var(--bad); box-shadow: 0 0 6px var(--bad);"></div>
+              <span>Bad (1-3)</span>
+            </div>
+          </div>
+        </div>
+        <div class="history-details-container" id="tabHistoryDetails">
+          <div class="no-zone-selected">Select a zone to view historical analyses.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Analysis History -->
+  <div class="analysis-history" id="historyPanel">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+      <div class="history-title" style="margin-bottom: 0;">Analysis History</div>
+      <button onclick="clearAllHistory()" style="background: none; border: 1px solid var(--border); color: var(--muted); padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 11px; transition: all 0.2s;" title="Clear all history">🗑 Clear</button>
+    </div>
+    <div class="history-grid-layout">
+      <div class="zone-grid-container" style="margin-bottom: 0;">
+        <div style="font-size: 13px; color: var(--muted); margin-bottom: 12px;">Global history map (click to explore)</div>
+        <div class="zone-grid" id="historyGrid"></div>
+        <div class="grid-legend">
+          <div class="legend-item">
+            <div class="legend-dot" style="background: var(--good); box-shadow: 0 0 6px var(--good);"></div>
+            <span>Good (7-10)</span>
+          </div>
+          <div class="legend-item">
+            <div class="legend-dot" style="background: var(--avg); box-shadow: 0 0 6px var(--avg);"></div>
+            <span>Average (4-6)</span>
+          </div>
+          <div class="legend-item">
+            <div class="legend-dot" style="background: var(--bad); box-shadow: 0 0 6px var(--bad);"></div>
+            <span>Bad (1-3)</span>
+          </div>
+        </div>
+      </div>
+      <div class="history-details-container" id="historyDetails">
+        <div class="no-zone-selected">Select a zone from the grid to see its analysis history.</div>
+      </div>
+    </div>
   </div>
 
   <footer>Krishikaran · Powered by Gemini 2.0 Flash · Built for SDG Goal 2</footer>
@@ -936,11 +1496,75 @@
 </div>
 
 <script>
+  let currentUser = localStorage.getItem('krishikaran_user');
   let imageBase64 = null;
-  let manualZones = []; // Store manually defined zones
-  let isZoneEditorActive = false;
-  let isDrawing = false;
-  let startX, startY;
+  let selectedZone = null; // Store only ONE selected zone
+  let analysisHistory = []; // Store all zone analyses
+  let currentImageName = ''; // Track current image for history
+  let trackedZones = [];
+  let selectedHistoryZone = null;
+
+  // Initialize Login State
+  window.addEventListener('DOMContentLoaded', () => {
+    if (currentUser) {
+      document.getElementById('loginOverlay').style.display = 'none';
+      document.getElementById('userGreeting').textContent = `Welcome, ${currentUser.charAt(0).toUpperCase() + currentUser.slice(1)}`;
+      document.getElementById('userGreeting').style.display = 'inline-block';
+    }
+  });
+
+  function handleLogin() {
+    const userVal = document.getElementById('loginUsername').value.trim().toLowerCase();
+    const passVal = document.getElementById('loginPassword').value.trim();
+    
+    if (userVal === 'sasi' && passVal === '123') {
+      currentUser = userVal;
+      localStorage.setItem('krishikaran_user', currentUser);
+      document.getElementById('loginOverlay').style.display = 'none';
+      document.getElementById('userGreeting').textContent = `Welcome, Sasi`;
+      document.getElementById('userGreeting').style.display = 'inline-block';
+      document.getElementById('loginError').style.display = 'none';
+    } else {
+      document.getElementById('loginError').style.display = 'block';
+    }
+  }
+
+  // Load history from server on page load
+
+  async function loadHistoryFromServer() {
+    try {
+      const response = await fetch('/load-history');
+      const result = await response.json();
+      if (result.success) {
+        analysisHistory = result.data || [];
+        renderHistory();
+      }
+    } catch (e) {
+      console.error('Error loading history from server:', e);
+      analysisHistory = [];
+    }
+  }
+
+  // Save history item to server
+  async function saveHistoryToServer(item) {
+    try {
+      const response = await fetch('/save-history', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(item)
+      });
+      const result = await response.json();
+      if (result.success) {
+        analysisHistory = result.data || [];
+        renderHistory();
+      }
+    } catch (e) {
+      console.error('Error saving history to server:', e);
+    }
+  }
+
+  // Initialize history from server on page load
+  loadHistoryFromServer();
 
   const dropZone   = document.getElementById('dropZone');
   const fileInput  = document.getElementById('fileInput');
@@ -951,130 +1575,74 @@
   const loading    = document.getElementById('loading');
   const results    = document.getElementById('results');
   const errorBox   = document.getElementById('errorBox');
-  const canvas     = document.getElementById('zoneCanvas');
-  const ctx        = canvas.getContext('2d');
-  const toggleZoneMode = document.getElementById('toggleZoneMode');
-  const clearZones = document.getElementById('clearZones');
-  const zonePanel  = document.getElementById('zoneEditorPanel');
-  const zoneList   = document.getElementById('zoneList');
-  const zoneHint   = document.getElementById('zoneHint');
+  const selectorPanel = document.getElementById('zoneSelectorPanel');
+  const selectorGrid = document.getElementById('zoneSelectorGrid');
+  const clearAllBtn = document.getElementById('clearAllZones');
+  const zoneCountDisplay = document.getElementById('zoneCount');
 
-  // Zone editor event listeners
-  toggleZoneMode.addEventListener('click', () => {
-    isZoneEditorActive = !isZoneEditorActive;
-    toggleZoneMode.classList.toggle('active', isZoneEditorActive);
-    canvas.classList.toggle('active', isZoneEditorActive);
-    zoneHint.textContent = isZoneEditorActive ? 'Drag to draw zones. Click "Define Zones" again to finish.' : '';
-    if (isZoneEditorActive) redrawZones();
-  });
-
-  clearZones.addEventListener('click', () => {
-    manualZones = [];
-    zoneList.innerHTML = '';
-    redrawZones();
-  });
-
-  canvas.addEventListener('mousedown', startZone);
-  canvas.addEventListener('mousemove', drawZone);
-  canvas.addEventListener('mouseup', endZone);
-  canvas.addEventListener('mouseleave', endZone);
-
-  function startZone(e) {
-    if (!isZoneEditorActive) return;
-    isDrawing = true;
-    const rect = canvas.getBoundingClientRect();
-    startX = e.clientX - rect.left;
-    startY = e.clientY - rect.top;
-  }
-
-  function drawZone(e) {
-    if (!isDrawing) return;
-    redrawZones();
-    
-    const rect = canvas.getBoundingClientRect();
-    const currentX = e.clientX - rect.left;
-    const currentY = e.clientY - rect.top;
-    
-    const width = currentX - startX;
-    const height = currentY - startY;
-    
-    // Draw preview rectangle
-    ctx.strokeStyle = 'rgba(74, 222, 128, 0.8)';
-    ctx.lineWidth = 2;
-    ctx.strokeRect(startX, startY, width, height);
-  }
-
-  function endZone(e) {
-    if (!isDrawing) return;
-    isDrawing = false;
-    
-    const rect = canvas.getBoundingClientRect();
-    const endX = e.clientX - rect.left;
-    const endY = e.clientY - rect.top;
-    
-    const width = Math.abs(endX - startX);
-    const height = Math.abs(endY - startY);
-    
-    // Only create zone if it has reasonable size
-    if (width > 20 && height > 20) {
-      const zoneId = `Zone-${manualZones.length + 1}`;
-      manualZones.push({
-        id: zoneId,
-        x: Math.min(startX, endX),
-        y: Math.min(startY, endY),
-        width: width,
-        height: height
-      });
-      
-      addZoneTag(zoneId);
-      redrawZones();
+  // Initialize home page zone chart with example data
+  function scrollToHistory() {
+    const historyPanel = document.getElementById('historyPanel');
+    if (historyPanel) {
+      historyPanel.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    } else {
+      alert('No analysis history yet. Upload an image and analyze zones to see history.');
     }
   }
 
-  function addZoneTag(zoneId) {
-    const tag = document.createElement('div');
-    tag.className = 'zone-tag';
-    tag.innerHTML = `
-      ${zoneId}
-      <button onclick="deleteZone('${zoneId}')">×</button>
-    `;
-    zoneList.appendChild(tag);
-  }
-
-  function deleteZone(zoneId) {
-    manualZones = manualZones.filter(z => z.id !== zoneId);
-    document.querySelectorAll('.zone-tag').forEach(tag => {
-      if (tag.textContent.includes(zoneId)) tag.remove();
-    });
-    redrawZones();
-  }
-
-  function redrawZones() {
-    if (canvas.width === 0) {
-      const rect = preview.getBoundingClientRect();
-      canvas.width = preview.offsetWidth;
-      canvas.height = preview.offsetHeight;
+  // Create 5x5 zone selector grid
+  function createZoneSelectorGrid() {
+    selectorGrid.innerHTML = '';
+    selectedZone = null;
+    
+    for (let row = 0; row < 5; row++) {
+      for (let col = 0; col < 5; col++) {
+        const zoneIndex = row * 5 + col;
+        const cell = document.createElement('div');
+        cell.className = 'zone-selector-cell';
+        cell.textContent = `${row}-${col}`;
+        cell.onclick = () => selectSingleZone(zoneIndex, cell);
+        cell.dataset.zoneIndex = zoneIndex;
+        selectorGrid.appendChild(cell);
+      }
     }
-    
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    
-    // Draw all zones
-    manualZones.forEach(zone => {
-      ctx.strokeStyle = 'rgba(74, 222, 128, 0.8)';
-      ctx.lineWidth = 2;
-      ctx.strokeRect(zone.x, zone.y, zone.width, zone.height);
-      
-      // Draw label
-      ctx.fillStyle = 'rgba(10, 15, 10, 0.9)';
-      ctx.fillRect(zone.x, zone.y - 24, zone.width, 24);
-      
-      ctx.fillStyle = '#4ade80';
-      ctx.font = 'bold 12px DM Mono';
-      ctx.fillText(zone.id, zone.x + 4, zone.y - 8);
-    });
   }
 
-  // Select button — stops propagation so drop zone click doesn't double-fire
+  function selectSingleZone(zoneIndex, cell) {
+    // Deselect all cells
+    selectorGrid.querySelectorAll('.zone-selector-cell').forEach(c => {
+      c.classList.remove('selected');
+    });
+    
+    // Select only the clicked zone
+    if (selectedZone === zoneIndex) {
+      selectedZone = null;
+    } else {
+      selectedZone = zoneIndex;
+      cell.classList.add('selected');
+    }
+    updateZoneCount();
+  }
+
+  function updateZoneCount() {
+    if (selectedZone !== null) {
+      const row = Math.floor(selectedZone / 5);
+      const col = selectedZone % 5;
+      zoneCountDisplay.textContent = `Zone (${row}-${col}) selected`;
+    } else {
+      zoneCountDisplay.textContent = 'No zone selected';
+    }
+  }
+
+  clearAllBtn.addEventListener('click', () => {
+    selectedZone = null;
+    selectorGrid.querySelectorAll('.zone-selector-cell').forEach(cell => {
+      cell.classList.remove('selected');
+    });
+    updateZoneCount();
+  });
+
+  // Select button — stops propagation
   selectBtn.addEventListener('click', e => {
     e.stopPropagation();
     fileInput.click();
@@ -1101,35 +1669,27 @@
 
   function loadFile(file) {
     fileName.textContent = file.name;
+    currentImageName = file.name; // Track image for history
     const reader = new FileReader();
     reader.onload = e => {
       imageBase64 = e.target.result;
       preview.src = imageBase64;
-      
-      // Setup canvas when image loads
-      preview.onload = () => {
-        canvas.width = preview.offsetWidth;
-        canvas.height = preview.offsetHeight;
-      };
-      
       previewWrap.classList.add('show');
-      zonePanel.classList.add('show');
+      selectorPanel.classList.add('show');
       errorBox.classList.remove('show');
       results.classList.remove('show');
       
-      // Reset zones for new image
-      manualZones = [];
-      zoneList.innerHTML = '';
-      isZoneEditorActive = false;
-      toggleZoneMode.classList.remove('active');
-      canvas.classList.remove('active');
-      zoneHint.textContent = '';
+      // Create zone selector grid
+      createZoneSelectorGrid();
     };
     reader.readAsDataURL(file);
   }
 
   async function analyze() {
-    if (!imageBase64) return;
+    if (!imageBase64 || selectedZone === null) {
+      alert('Please select exactly one zone to analyze');
+      return;
+    }
 
     document.getElementById('analyzeBtn').disabled = true;
     loading.classList.add('show');
@@ -1137,9 +1697,15 @@
     results.classList.remove('show');
 
     try {
+      // Convert selected zone to grid coordinates
+      const row = Math.floor(selectedZone / 5);
+      const col = selectedZone % 5;
+      const zonesArray = [{row, col, index: selectedZone}];
+
       const payload = { 
         image: imageBase64,
-        manual_zones: manualZones.length > 0 ? manualZones : null
+        selected_zones: zonesArray,
+        username: currentUser
       };
       
       const resp = await fetch('/analyze', {
@@ -1183,6 +1749,9 @@
   }
 
   function renderResults(data) {
+    // Hide zone selector panel
+    selectorPanel.classList.remove('show');
+    
     // Header
     const hc = healthClass(data.overall_health);
     const badge = document.getElementById('healthBadge');
@@ -1197,85 +1766,60 @@
       document.getElementById('confFill').style.width = score + '%';
     }, 100);
 
-    // Render 5x5 Zone Grid
+    // Render 5x5 Zone Grid with Analysis Results
     const zoneGrid = document.getElementById('zoneGridContainer');
     zoneGrid.innerHTML = '';
     
-    if (data.zone_grid && data.zone_grid.length > 0) {
-      // Create all 25 cells (5x5)
-      for (let row = 0; row < 5; row++) {
-        for (let col = 0; col < 5; col++) {
-          const zoneData = data.zone_grid.find(z => z.row === row && z.col === col);
-          
-          if (zoneData) {
-            // Determine health class based on 1-10 score
-            let hk = 'avg';
-            const score110 = zoneData.score_1_10 || 5;
-            if (score110 >= 7) hk = 'good';
-            else if (score110 <= 3) hk = 'bad';
-            
-            const rowCol = `${row}-${col}`;
-            
-            const cell = document.createElement('div');
-            cell.className = `zone-cell ${hk}`;
-            cell.title = `Zone (${row},${col}): Score ${score110}/10 - ${zoneData.description || 'No description'}`;
-            cell.innerHTML = `
-              <div class="zone-score">${score110}</div>
-              <div class="zone-label">(${row},${col})</div>
-            `;
-            zoneGrid.appendChild(cell);
-          } else {
-            // Create empty cell if data missing
-            const cell = document.createElement('div');
-            cell.className = 'zone-cell avg';
-            cell.innerHTML = `
-              <div class="zone-score">—</div>
-              <div class="zone-label">(${row},${col})</div>
-            `;
-            zoneGrid.appendChild(cell);
-          }
-        }
-      }
-    }
-
-    // Render Manual Zones if provided
-    if (data.manual_zones && data.manual_zones.length > 0) {
-      const manualZonesTitle = document.querySelector('.card-full') || document.createElement('div');
-      
-      // Create manual zones card BEFORE the Zones section
-      const manualCard = document.createElement('div');
-      manualCard.className = 'card card-full';
-      manualCard.style.order = '-1';
-      
-      const titleHtml = `
-        <div class="card-title">Manual Zone Analysis</div>
-        <div id="manualZonesContainer"></div>
-      `;
-      manualCard.innerHTML = titleHtml;
-      
-      // Find the results grid and insert at beginning
-      const resultsGrid = document.querySelector('.results-grid');
-      if (resultsGrid) {
-        resultsGrid.insertBefore(manualCard, resultsGrid.firstChild);
-      }
-      
-      const manualContainer = document.getElementById('manualZonesContainer');
-      manualContainer.innerHTML = '';
-      
-      data.manual_zones.forEach(zone => {
-        const score110 = zone.score_1_10 || 5;
-        const hk = score110 >= 7 ? 'good' : (score110 <= 3 ? 'bad' : 'avg');
+    // Create all 25 cells (5x5)
+    for (let row = 0; row < 5; row++) {
+      for (let col = 0; col < 5; col++) {
+        const cell = document.createElement('div');
+        const zoneData = data.zone_grid ? data.zone_grid.find(z => z.row === row && z.col === col) : null;
+        const zoneHistory = getZoneHistory(row, col); // Get historical analyses
+        const zoneKey = `Zone (${row},${col})`;
+        const isTracked = trackedZones.includes(zoneKey);
         
-        manualContainer.innerHTML += `
-          <div class="zone-item">
-            <div class="zone-dot ${hk}"></div>
-            <div class="zone-info">
-              <div class="zone-name">${zone.zone_id}</div>
-              <div class="zone-desc">${zone.analysis || zone.color_description || ''}</div>
-              <div style="margin-top: 8px; font-weight: 600; color: var(--green);">Score: ${score110}/10 (${zone.health})</div>
-            </div>
-          </div>`;
-      });
+        if (zoneData) {
+          // Determine health class based on 1-10 score
+          let hk = 'avg';
+          const score110 = zoneData.score_1_10 || 5;
+          if (score110 >= 7) hk = 'good';
+          else if (score110 <= 3) hk = 'bad';
+          
+          cell.className = `zone-cell ${hk} ${isTracked ? 'tracked' : ''}`;
+          
+          // Build tooltip with current and historical data
+          let tooltipText = `Zone (${row},${col}): Score ${score110}/10 - ${zoneData.description || ''}`;
+          if (zoneHistory.length > 0) {
+            tooltipText += `\n\nHistory (${zoneHistory.length} analyses):`;
+            zoneHistory.forEach(h => {
+              tooltipText += `\n• ${h.imageName}: ${h.score}/10 (${h.health})`;
+            });
+          }
+          
+          cell.title = tooltipText;
+          
+          // Show history badge if exists
+          const historyIndicator = zoneHistory.length > 0 ? `<div class="zone-history-badge">${zoneHistory.length}</div>` : '';
+          const trackButton = `<button class="zone-track-btn" onclick="toggleZoneTracking('${zoneKey}')" title="${isTracked ? 'Untrack' : 'Track'} this zone">📌</button>`;
+          
+          cell.innerHTML = `
+            <div class="zone-score">${score110}</div>
+            <div class="zone-label">(${row},${col})</div>
+            ${historyIndicator}
+            ${trackButton}
+          `;
+        } else {
+          // Empty/unanalyzed cell
+          cell.className = 'zone-cell avg';
+          cell.opacity = '0.5';
+          cell.innerHTML = `
+            <div class="zone-score" style="opacity:0.5;">—</div>
+            <div class="zone-label">(${row},${col})</div>
+          `;
+        }
+        zoneGrid.appendChild(cell);
+      }
     }
 
     // Zones
@@ -1331,25 +1875,258 @@
     });
 
     results.classList.add('show');
+    
+    // Save this analysis to history
+    if (selectedZone !== null) {
+      const row = Math.floor(selectedZone / 5);
+      const col = selectedZone % 5;
+      const zoneData = data.zone_grid ? data.zone_grid.find(z => z.row === row && z.col === col) : null;
+      if (zoneData) {
+        // Calculate health class based on score (same logic as zone cells)
+        let healthType = 'avg';
+        const score110 = zoneData.score_1_10 || 5;
+        if (score110 >= 7) healthType = 'good';
+        else if (score110 <= 3) healthType = 'bad';
+        
+        saveToHistory(row, col, zoneData.score_1_10, healthType, zoneData.description || '', currentImageName);
+      }
+    }
+    
     results.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  function saveToHistory(row, col, score, health, description, imageName) {
+    const historyItem = {
+      zone: `Zone (${row},${col})`,
+      row: row,
+      col: col,
+      score: score,
+      health: health,
+      description: description,
+      imageName: imageName,
+      timestamp: new Date().toLocaleTimeString()
+    };
+    // Save to server
+    saveHistoryToServer(historyItem);
+  }
+
+  function renderHistory() {
+    renderHistoryGrid('historyGrid', 'historyDetails');
+    renderHistoryGrid('tabHistoryGrid', 'tabHistoryDetails');
+    
+    // Refresh details if a zone was selected
+    if (selectedHistoryZone) {
+      const { row, col } = selectedHistoryZone;
+      showHistoryZoneDetails(row, col, 'historyDetails', 'historyGrid', false);
+      showHistoryZoneDetails(row, col, 'tabHistoryDetails', 'tabHistoryGrid', false);
+    }
+  }
+
+  function renderHistoryGrid(gridId, detailsId) {
+    const grid = document.getElementById(gridId);
+    if (!grid) return;
+    
+    grid.innerHTML = '';
+    
+    const zoneStats = {};
+    analysisHistory.forEach(item => {
+      const key = `${item.row}-${item.col}`;
+      if (!zoneStats[key]) {
+        zoneStats[key] = {
+          count: 0,
+          totalScore: 0
+        };
+      }
+      zoneStats[key].count++;
+      zoneStats[key].totalScore += item.score;
+    });
+
+    for (let row = 0; row < 5; row++) {
+      for (let col = 0; col < 5; col++) {
+        const cell = document.createElement('div');
+        const key = `${row}-${col}`;
+        const stats = zoneStats[key];
+        
+        const isSelected = selectedHistoryZone && selectedHistoryZone.row === row && selectedHistoryZone.col === col;
+        
+        if (stats) {
+          const avgScore = Math.round(stats.totalScore / stats.count);
+          let hk = 'avg';
+          if (avgScore >= 7) hk = 'good';
+          else if (avgScore <= 3) hk = 'bad';
+          
+          cell.className = `zone-cell ${hk} ${isSelected ? 'selected' : ''}`;
+          cell.innerHTML = `
+            <div class="zone-score">${avgScore}</div>
+            <div class="zone-label">(${row},${col})</div>
+            <div class="zone-history-badge">${stats.count}</div>
+          `;
+          cell.onclick = () => {
+            showHistoryZoneDetails(row, col, 'historyDetails', 'historyGrid');
+            showHistoryZoneDetails(row, col, 'tabHistoryDetails', 'tabHistoryGrid');
+          };
+        } else {
+          cell.className = `zone-cell avg ${isSelected ? 'selected' : ''}`;
+          cell.style.opacity = '0.3';
+          cell.innerHTML = `
+            <div class="zone-score" style="opacity:0.5;">—</div>
+            <div class="zone-label">(${row},${col})</div>
+          `;
+          cell.onclick = () => {
+             showHistoryZoneDetails(row, col, 'historyDetails', 'historyGrid');
+             showHistoryZoneDetails(row, col, 'tabHistoryDetails', 'tabHistoryGrid');
+          };
+        }
+        grid.appendChild(cell);
+      }
+    }
+  }
+
+  function showHistoryZoneDetails(row, col, detailsId, gridId, updateState = true) {
+    if (updateState) {
+      selectedHistoryZone = { row, col };
+    }
+    
+    const detailsContainer = document.getElementById(detailsId);
+    if (!detailsContainer) return;
+
+    // Highlight selected cell in the grid
+    const grid = document.getElementById(gridId);
+    if (grid) {
+      grid.querySelectorAll('.zone-cell').forEach(cell => {
+        cell.classList.remove('selected');
+        const label = cell.querySelector('.zone-label').textContent;
+        if (label === `(${row},${col})`) {
+          cell.classList.add('selected');
+        }
+      });
+    }
+
+    const zoneHistory = analysisHistory.filter(item => item.row === row && item.col === col);
+    
+    if (zoneHistory.length === 0) {
+      detailsContainer.innerHTML = `<div class="no-zone-selected">No history for Zone (${row},${col}).</div>`;
+      return;
+    }
+
+    detailsContainer.innerHTML = `
+      <div class="history-details-title">
+        <span>History for Zone (${row},${col})</span>
+      </div>
+      <div class="history-list" style="max-height: none; overflow: visible;">
+        ${zoneHistory.map(item => {
+          const scoreClass = item.score >= 7 ? 'good' : item.score >= 4 ? 'avg' : 'bad';
+          // Find original index in analysisHistory for deletion
+          const originalIndex = analysisHistory.findIndex(i => i.row === row && i.col === col && i.timestamp === item.timestamp && i.imageName === item.imageName);
+          return `
+            <div class="history-detail-item">
+              <div class="history-detail-header">
+                <div class="history-detail-image">📷 ${item.imageName}</div>
+                <div style="display: flex; align-items: center; gap: 10px;">
+                  <div class="history-detail-score ${scoreClass}">${item.score}/10</div>
+                  <button class="history-delete" onclick="deleteHistoryItem(${originalIndex})" title="Delete this analysis" style="padding: 0; font-size: 12px;">✕</button>
+                </div>
+              </div>
+              <div class="history-detail-time">${item.timestamp}</div>
+              <div class="history-detail-desc">${item.description}</div>
+            </div>
+          `;
+        }).join('')}
+      </div>
+    `;
+  }
+
+  function deleteHistoryItem(index) {
+    fetch(`/delete-history/${index}`, { method: 'DELETE' })
+      .then(r => r.json())
+      .then(result => {
+        if (result.success) {
+          analysisHistory = result.data || [];
+          renderHistory();
+        }
+      })
+      .catch(e => console.error('Error deleting history item:', e));
+  }
+
+  function getZoneHistory(row, col) {
+    // Return all historical analyses for a specific zone (excluding current image)
+    return analysisHistory.filter(item => item.row === row && item.col === col && item.imageName !== currentImageName);
+  }
+
+  function toggleZoneTracking(zoneKey) {
+    const index = trackedZones.indexOf(zoneKey);
+    if (index > -1) {
+      // Remove from tracked
+      trackedZones.splice(index, 1);
+    } else {
+      // Add to tracked
+      trackedZones.push(zoneKey);
+    }
+    
+    // Update UI - re-render current tab (zone grid)
+    const zoneGrid = document.getElementById('zoneGridContainer');
+    if (zoneGrid && zoneGrid.children.length > 0) {
+      // Update tracked class for all cells
+      const allCells = zoneGrid.querySelectorAll('.zone-cell');
+      allCells.forEach((cell, idx) => {
+        const row = Math.floor(idx / 5);
+        const col = idx % 5;
+        const cellZoneKey = `Zone (${row},${col})`;
+        if (trackedZones.includes(cellZoneKey)) {
+          cell.classList.add('tracked');
+        } else {
+          cell.classList.remove('tracked');
+        }
+      });
+    }
+  }
+
+  function switchTab(tabName) {
+    // Hide all tabs
+    document.getElementById('tab-content-current').classList.remove('active');
+    document.getElementById('tab-content-history').classList.remove('active');
+    
+    // Remove active from all buttons
+    document.getElementById('tab-current').classList.remove('active');
+    document.getElementById('tab-history').classList.remove('active');
+    
+    // Show selected tab
+    if (tabName === 'current') {
+      document.getElementById('tab-content-current').classList.add('active');
+      document.getElementById('tab-current').classList.add('active');
+    } else if (tabName === 'history') {
+      document.getElementById('tab-content-history').classList.add('active');
+      document.getElementById('tab-history').classList.add('active');
+      renderHistory();
+    }
   }
 
   function reset() {
     imageBase64 = null;
-    manualZones = [];
-    isZoneEditorActive = false;
+    selectedZone = null;
+    // Keep analysisHistory for comparison across images
     preview.src = '';
     previewWrap.classList.remove('show');
-    zonePanel.classList.remove('show');
+    selectorPanel.classList.remove('show');
     results.classList.remove('show');
     errorBox.classList.remove('show');
     fileInput.value = '';
     document.getElementById('analyzeBtn').disabled = false;
-    toggleZoneMode.classList.remove('active');
-    canvas.classList.remove('active');
-    zoneList.innerHTML = '';
-    zoneHint.textContent = '';
     window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  function clearAllHistory() {
+    if (confirm('Are you sure you want to clear all analysis history?')) {
+      fetch('/clear-history', { method: 'DELETE' })
+        .then(r => r.json())
+        .then(result => {
+          if (result.success) {
+            analysisHistory = [];
+            renderHistory();
+          }
+        })
+        .catch(e => console.error('Error clearing history:', e));
+    }
   }
 </script>
 </body>
