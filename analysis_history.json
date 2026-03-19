@@ -1,5 +1,35 @@
 [
   {
+    "zone": "Zone (1,1)",
+    "row": 1,
+    "col": 1,
+    "score": 2,
+    "health": "bad",
+    "description": "The leaves exhibit severe marginal necrosis and browning, indicating significant stress, likely due to nutrient deficiency or drought.",
+    "imageName": "disease.jpeg",
+    "timestamp": "8:20:39 AM"
+  },
+  {
+    "zone": "Zone (0,3)",
+    "row": 0,
+    "col": 3,
+    "score": 2,
+    "health": "bad",
+    "description": "The leaves show significant necrosis, browning, and damage, indicating a serious plant health issue like disease or nutrient stress. \ud83d\udcc9 Trend: Sasi, the health declined (-7) since previous analysis.",
+    "imageName": "disease.jpeg",
+    "timestamp": "8:05:36 AM"
+  },
+  {
+    "zone": "Zone (1,4)",
+    "row": 1,
+    "col": 4,
+    "score": 9,
+    "health": "good",
+    "description": "An aerial view shows a healthy, well-maintained vineyard or orchard with orderly, densely planted rows. \ud83d\udcc8 Trend: Sasi, the health improved (+7) since previous analysis.",
+    "imageName": "good_crop.jpeg",
+    "timestamp": "8:00:27 AM"
+  },
+  {
     "zone": "Zone (0,3)",
     "row": 0,
     "col": 3,
@@ -78,16 +108,6 @@
     "description": "Leaves show advanced necrotic lesions and browning indicative of pathogenic infection.",
     "imageName": "disease.jpeg",
     "timestamp": "12:27:57 AM"
-  },
-  {
-    "zone": "Zone (1,4)",
-    "row": 1,
-    "col": 4,
-    "score": 2,
-    "health": "bad",
-    "description": "Severe tissue necrosis and browning visible on leaves, indicating significant fungal pathogen activity.",
-    "imageName": "disease.jpeg",
-    "timestamp": "12:19:28 AM"
   },
   {
     "zone": "Zone (1,0)",

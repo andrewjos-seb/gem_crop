@@ -15,6 +15,13 @@ def load_history():
             return []
     return []
 
+def escape_markdown(text):
+    """Helper function to escape markdown special characters for Telegram Markdown V1."""
+    if text is None:
+        return ""
+    # Characters that have special meaning in Markdown V1: _, *, `, [
+    return str(text).replace('_', '\\_').replace('*', '\\*').replace('`', '\\`').replace('[', '\\[')
+
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Send a message with an inline keyboard to select a zone."""
     keyboard = []
@@ -132,16 +139,23 @@ async def button(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         img = latest.get("imageName", "Unknown image")
         time = latest.get("timestamp", "Unknown time")
         
+        # Escape dynamic content for Markdown
+        e_health = escape_markdown(health)
+        e_score = escape_markdown(score)
+        e_desc = escape_markdown(desc)
+        e_img = escape_markdown(img)
+        e_time = escape_markdown(time)
+        
         # Format the response message
         msg = f"🌾 *Zone ({row},{col}) Status*\n\n"
         
         # Health indicator emoji
         health_emoji = "🟢" if health == "GOOD" else "🟡" if health == "AVG" else "🔴"
         
-        msg += f"{health_emoji} *Health:* {health} ({score}/10)\n"
-        msg += f"📷 *Image:* {img}\n"
-        msg += f"🕒 *Time:* {time}\n\n"
-        msg += f"📝 *Notes:* {desc}\n\n"
+        msg += f"{health_emoji} *Health:* {e_health} ({e_score}/10)\n"
+        msg += f"📷 *Image:* {e_img}\n"
+        msg += f"🕒 *Time:* {e_time}\n\n"
+        msg += f"📝 *Notes:* {e_desc}\n\n"
         
         # Trend Analysis
         if len(zone_history) > 1:
